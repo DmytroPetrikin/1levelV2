@@ -58,17 +58,11 @@ function getResult($uri, $statusmessage)
 
 function getStatusMessage($statuscode)
 {
-    switch ($statuscode){
-        case 404:
-
-            return "Not Found";
-        case 400:
-
-            return "Bad Request";
-        default:
-
-            return "OK";
-    }
+    return match ($statuscode){
+        404 => "Not Found",
+        400 => 'Bad Request',
+        default => 'OK',
+    };
 }
 
 function getStatusCode($method, $uri)

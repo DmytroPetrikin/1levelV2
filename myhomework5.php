@@ -44,38 +44,22 @@ function processHttpRequest($method, $uri, $headers, $body)
 
 function getResult($code, $uri, $headers)
 {
-    switch ($code) {
-        case "200":
-
-            return file_get_contents(START_DIRECTORY . getHost($headers) . $uri);
-        case "403":
-
-            return "Access denied";
-        case "404":
-
-            return "Not Found";
-        default:
-
-            return "Unknown Status";
-    }
+    return match ($code) {
+        '200' => file_get_contents(START_DIRECTORY . getHost($headers) . $uri),
+        '403' => "Access denied",
+        '404' => "Not Found",
+        default => "Unknown Status",
+    };
 }
 
 function getstatusmessage($code)
 {
-    switch ($code) {
-        case "200":
-
-            return "OK";
-        case "403":
-
-            return "Access denied";
-        case "404":
-
-            return "Not Found";
-        default:
-
-            return "Unknown Status";
-    }
+    return match ($code) {
+        '200' => 'OK',
+        '403' => 'Access denied',
+        '404' => 'Not Found',
+        default => 'Unknown Status',
+    };
 }
 
 function getStatusCode($headers, $uri)

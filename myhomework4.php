@@ -43,51 +43,25 @@ function processHttpRequest($method, $uri, $headers, $body)
 
 function getResult($statuscode)
 {
-    switch ($statuscode) {
-        case "200":
-
-            return '<h1 style="color:green">FOUND</h1>';
-        case '400':
-
-            return '<h1 style="color:red">BAD REQUEST</h1>';
-        case "404":
-
-            return '<h1 style="color:red">NOT FOUND</h1>';
-        case "401":
-
-            return '<h1 style="color:red">WRONG PASSWORD</h1>';
-        case '500':
-
-            return '<h1 style="color:red">INTERNAL SERVER ERROR</h1>';
-        default:
-
-            return "Unknown Status";
-    }
-
+    return match ($statuscode) {
+        '200' => '<h1 style="color:green">FOUND</h1>',
+        '400' => '<h1 style="color:red">NOT FOUND</h1>',
+        '404' => '<h1 style="color:red">NOT FOUND</h1>',
+        '401' => '<h1 style="color:red">WRONG PASSWORD</h1>',
+        '500' => '<h1 style="color:red">INTERNAL SERVER ERROR</h1>',
+        default => "Unknown Status",
+    };
 }
 
 function getStatusMessage($statuscode)
 {
-    switch ($statuscode) {
-        case "200":
-
-            return "OK";
-        case "400":
-
-            return "Bad Request";
-        case "401":
-
-            return "Unauthorized";
-        case "404":
-
-            return "Not Found";
-        case "500":
-
-            return "Internal Server Error";
-        default:
-
-            return "Unknown Status";
-    }
+    return match ($statuscode){
+        '200' => 'Ok',
+        '400' => 'Bad Request',
+        '404' => 'Not Found',
+        '500' => 'Internal Server Error',
+        default => 'Unknown Status',
+    };
 }
 
 function getStatusCode($headers, $uri, $body)
