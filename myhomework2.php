@@ -31,10 +31,12 @@ $contents = readHttpLikeInput();
 function parseTcpStringAsHttpRequest($string)
 {
 
-    return ["method" => getMethod($string),
+    return [
+        "method" => getMethod($string),
         "uri" => getUri($string),
         "headers" => getHeaders($string),
-        "body" => getBody($string),];
+        "body" => getBody($string),
+    ];
 }
 
 function getHeaders($string)

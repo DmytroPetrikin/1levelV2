@@ -83,16 +83,17 @@ function getStatusCode($headers, $uri)
     if (checkHost($headers)) {
 
         return "404";
-    } elseif (checkDirectory($uri, $headers)) {
+    }
+    if (checkDirectory($uri, $headers)) {
 
         return "403";
-    } elseif (checkFile($uri, $headers)) {
+    }
+    if (checkFile($uri, $headers)) {
 
         return "404";
-    } else {
-
-        return "200";
     }
+
+    return "200";
 }
 
 function checkFile($uri, $headers)
@@ -149,10 +150,12 @@ class HostNotFoundException extends Exception
 function parseTcpStringAsHttpRequest($string)
 {
 
-    return ["method" => getMethod($string),
+    return [
+        "method" => getMethod($string),
         "uri" => getUri($string),
         "headers" => getHeaders($string),
-        "body" => getBody($string),];
+        "body" => getBody($string),
+    ];
 }
 
 function getHeaders($string)

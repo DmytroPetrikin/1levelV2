@@ -95,21 +95,21 @@ function getStatusCode($headers, $uri, $body)
     if (checkUriEndContentType($uri, $headers)) {//якщо неправильний урі або контент тайп
 
         return "400";
-    } elseif (checkPassTxt()) {
+    }
+    if (checkPassTxt()) {
 
         return "500";
-    } elseif (checkLogin($body)) {
+    }
+    if (checkLogin($body)) {
 
         return "404";
-    } elseif (checkPassword($body)) {//якщо неправильний  пароль
+    }
+    if (checkPassword($body)) {//якщо неправильний  пароль
 
         return "401";
-    } else {
-
-        return "200";
     }
 
-
+    return "200";
 }
 
 function checkPassword($body)
@@ -132,7 +132,7 @@ function checkPassword($body)
 function getPassword($body)
 {
 
-    return explode('password=',$body)[1];
+    return explode('password=', $body)[1];
 }
 
 function checkPassTxt()
@@ -145,14 +145,14 @@ function checkLogin($body)
 {
     $data = file_get_contents(FILE);
 
-    return !str_contains($data,getLogin($body).':');
+    return !str_contains($data, getLogin($body) . ':');
 }
 
 function getLogin($body)
 {
-    $logPass = explode('login=',$body)[1];
+    $logPass = explode('login=', $body)[1];
 
-    return explode('&password=',$logPass)[0];
+    return explode('&password=', $logPass)[0];
 }
 
 function checkUriEndContentType($uri, $headers)
@@ -187,10 +187,12 @@ function start(array $explode)
 function parseTcpStringAsHttpRequest($string)
 {
 
-    return ["method" => getMethod($string),
+    return [
+        "method" => getMethod($string),
         "uri" => getUri($string),
         "headers" => getHeaders($string),
-        "body" => getBody($string),];
+        "body" => getBody($string),
+    ];
 }
 
 function getHeaders($string)
