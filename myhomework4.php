@@ -24,13 +24,13 @@ const FILE = "passwords";
 
 function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 {
-    $response = "HTTP/1.1 $statuscode $statusmessage\n";
-    $response .= "Date: " . date("l, d F  Y h:i:sa") . "\n";
-    $response .= "Server: Apache/2.2.14 (Win32)\n";
-    $response .= "Content-Length: " . strlen($body) . "\n";
-    $response .= "Connection: Closed\n";
-    $response .= "Content-Type: text/html; charset=utf-8\n";
-    $response .= "\n$body";
+    $response = "HTTP/1.1 $statuscode $statusmessage" . PHP_EOL;
+    $response .= "Date: " . date("l, d F  Y h:i:sa") . PHP_EOL;
+    $response .= "Server: Apache/2.2.14 (Win32)" . PHP_EOL;
+    $response .= "Content-Length: " . strlen($body) . PHP_EOL;
+    $response .= "Connection: Closed" . PHP_EOL;
+    $response .= "Content-Type: text/html; charset=utf-8" . PHP_EOL;
+    $response .= PHP_EOL . "$body";
 
     echo $response;
 }
@@ -38,21 +38,29 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 function processHttpRequest($method, $uri, $headers, $body)
 {
     $statuscode = getStatusCode($headers, $uri, $body);
-    $statusmessage = getStatusMessage($statuscode);
-    $body = getResult($statuscode);
-    outputHttpResponse($statuscode, $statusmessage, $headers, $body);
+    outputHttpResponse($statuscode, getStatusMessage($statuscode), $headers, getResult($statuscode));
 }
 
 function getResult($statuscode)
 {
     switch ($statuscode) {
         case "200":
+
             return '<h1 style="color:green">FOUND</h1>';
+        case '400':
+
+            return '<h1 style="color:red">BAD REQUEST</h1>';
         case "404":
+
             return '<h1 style="color:red">NOT FOUND</h1>';
         case "401":
+
             return '<h1 style="color:red">WRONG PASSWORD</h1>';
+        case '500':
+
+            return '<h1 style="color:red">INTERNAL SERVER ERROR</h1>';
         default:
+
             return "Unknown Status";
     }
 
@@ -62,16 +70,22 @@ function getStatusMessage($statuscode)
 {
     switch ($statuscode) {
         case "200":
+
             return "OK";
         case "400":
+
             return "Bad Request";
         case "401":
+
             return "Unauthorized";
         case "404":
+
             return "Not Found";
         case "500":
+
             return "Internal Server Error";
         default:
+
             return "Unknown Status";
     }
 }
@@ -79,14 +93,19 @@ function getStatusMessage($statuscode)
 function getStatusCode($headers, $uri, $body)
 {
     if (checkUriEndContentType($uri, $headers)) {//якщо неправильний урі або контент тайп
+
         return "400";
-    } elseif (!checkPassTxt()) {
+    } elseif (checkPassTxt()) {
+
         return "500";
     } elseif (checkLogin($body)) {
+
         return "404";
     } elseif (checkPassword($body)) {//якщо неправильний  пароль
+
         return "401";
     } else {
+
         return "200";
     }
 
@@ -96,78 +115,68 @@ function getStatusCode($headers, $uri, $body)
 function checkPassword($body)
 {
     $password = getPassword($body);
-    $passwordString = strval($password);
     $log = getLogin($body);
-    $date = explode("\n", file_get_contents(FILE));
-    foreach ($date as $line) {
-        if (strpos($line, $log) !== false) {
-            $parts = explode(":", $line);
-            $truePass = end($parts);
-            return $truePass !== $passwordString; // Порівнюємо рядки
-        }
+    $data = file_get_contents(FILE);
+
+    if (str_contains($data, $log)) {
+        $firstValuePassword = explode($log . ':', $data)[1];
+        $truePassword = explode(PHP_EOL, $firstValuePassword)[0];
+
+        return $truePassword !== $password;
     }
+
     return true;
 }
 
 
 function getPassword($body)
 {
-    $logPass = explode("&", $body);
-    $almostPassword = explode("password=", end($logPass));
-    return end($almostPassword);
+
+    return explode('password=',$body)[1];
 }
 
 function checkPassTxt()
 {
-    return file_exists(FILE);
+
+    return !file_exists(FILE);
 }
 
 function checkLogin($body)
 {
-    $file = file_get_contents(FILE);
-    $login = getLogin($body);
-    $lines = explode("\n", $file);
-    foreach ($lines as $line) {
-        $parts = explode(":", $line);
-        if ($parts[0] === $login) {
-            return false; // Логін знайдено у файлі
-        }
-    }
-    return true; // Логін не знайдено у файлі
+    $data = file_get_contents(FILE);
+
+    return !str_contains($data,getLogin($body).':');
 }
 
 function getLogin($body)
 {
-    $logPass = explode("&", $body);
-    $strlogin = start($logPass);
-    $login = explode("=", $strlogin);
-    return end($login);
+    $logPass = explode('login=',$body)[1];
+
+    return explode('&password=',$logPass)[0];
 }
 
 function checkUriEndContentType($uri, $headers)
 {
     $contType = getContType($headers);
+
     return $uri !== MY_URI || $contType !== MY_CONT_TYPE;
 }
 
 class ContentTypeNotFoundException extends Exception
 {
-    public function errorMessage()
-    {
-        return "The Content-Type was not found in the headers.";
-    }
 }
 
 function getContType($headers)
 {
+
     foreach ($headers as $subarray) {
-        foreach ($subarray as $key => $value) {
-            if ($key === "Content-Type") {
-                return $value;
-            }
+
+        if ($subarray[0] === "Content-Type") {
+
+            return $subarray[1];
         }
     }
-    throw new ContentTypeNotFoundException();
+    throw new ContentTypeNotFoundException("The Content-Type was not found in the headers.");
 }
 
 function start(array $explode)
@@ -177,27 +186,22 @@ function start(array $explode)
 
 function parseTcpStringAsHttpRequest($string)
 {
-    return array(
-        "method" => getMethod($string),
+
+    return ["method" => getMethod($string),
         "uri" => getUri($string),
         "headers" => getHeaders($string),
-        "body" => getBody($string),
-    );
+        "body" => getBody($string),];
 }
 
 function getHeaders($string)
 {
-    $lines = explode("\n", $string);
-
-    $headers = array();
+    $lines = explode(PHP_EOL, $string);
+    $headers = [];
 
     for ($i = 1; $i < sizeof($lines); $i++) {
-        if (strpos($lines[$i], ":")) {
-            $keyAndValue = explode(": ", $lines[$i]);
-            $header = [
-                $keyAndValue[0] => $keyAndValue[1]
-            ];
-            $headers[] = $header;
+
+        if (str_contains($lines[$i], ':')) {
+            $headers[] = explode(': ', $lines[$i]);
         }
     }
 
@@ -206,31 +210,29 @@ function getHeaders($string)
 
 function getBody($string)
 {
-    $lines = explode("\n", $string);
-    $emptyIndex = array_search("", $lines); // Знаходимо індекс порожнього рядка, розділяючого заголовки та тіло
-    return trim(implode(array_slice($lines, $emptyIndex + 1))); // Повертаємо всі рядки після порожнього рядка як тіло запиту
+
+    return explode(PHP_EOL . PHP_EOL, $string, 2)[1];
 }
 
 function getUri($string)
 {
-    $result = explode(" ", $string);
-    return $result[1];
+
+    return explode(" ", $string)[1];
 }
 
 function getMethod($string)
 {
-    $array = explode(" ", $string);
-    return $array[0];
+
+    return explode(" ", $string)[0];
 }
 
-$mystr = "POST /api/checkLoginAndPassword HTTP/1.1
+$testString = "POST /api/checkLoginAndPassword HTTP/1.1
 Accept: */*
 Content-Type: application/x-www-form-urlencoded
 User-Agent: Mozilla/4.0
 Content-Length: 35
 
-login=login1&password=1
-";
+login=login1&password=1";
 
-$http = parseTcpStringAsHttpRequest($mystr);
+$http = parseTcpStringAsHttpRequest($testString);
 processHttpRequest($http["method"], $http["uri"], $http["headers"], $http["body"]);

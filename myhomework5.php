@@ -1,5 +1,5 @@
 <?php
-const START_DIRECTORY = "/home/dmytro/";
+const START_DIRECTORY = "D:/";
 
 //function readHttpLikeInput()
 //{
@@ -22,13 +22,13 @@ const START_DIRECTORY = "/home/dmytro/";
 
 function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 {
-    $response = "HTTP/1.1 $statuscode $statusmessage\n";
-    $response .= "Date: " . date("l, d F  Y h:i:sa") . "\n";
-    $response .= "Server: Apache/2.2.14 (Win32)\n";
-    $response .= "Content-Length: " . strlen($body) . "\n";
-    $response .= "Connection: Closed\n";
-    $response .= "Content-Type: text/html; charset=utf-8\n";
-    $response .= "\n$body";
+    $response = "HTTP/1.1 $statuscode $statusmessage" . PHP_EOL;
+    $response .= "Date: " . date("l, d F  Y h:i:sa") . PHP_EOL;
+    $response .= "Server: Apache/2.2.14 (Win32)" . PHP_EOL;
+    $response .= "Content-Length: " . strlen($body) . PHP_EOL;
+    $response .= "Connection: Closed" . PHP_EOL;
+    $response .= "Content-Type: text/html; charset=utf-8" . PHP_EOL;
+    $response .= PHP_EOL . "$body";
 
     echo $response;
 }
@@ -36,9 +36,9 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 function processHttpRequest($method, $uri, $headers, $body)
 {
     $statuscode = getStatusCode($headers, $uri);
-    $statusmessage = getStatusMessage($statuscode);
+    $statusMessage = getStatusMessage($statuscode);
     $body = getResult($statuscode, $uri, $headers);
-    outputHttpResponse($statuscode, $statusmessage, $headers, $body);
+    outputHttpResponse($statuscode, $statusMessage, $headers, $body);
 
 }
 
@@ -46,12 +46,16 @@ function getResult($code, $uri, $headers)
 {
     switch ($code) {
         case "200":
+
             return file_get_contents(START_DIRECTORY . getHost($headers) . $uri);
         case "403":
+
             return "Access denied";
         case "404":
+
             return "Not Found";
         default:
+
             return "Unknown Status";
     }
 }
@@ -60,12 +64,16 @@ function getstatusmessage($code)
 {
     switch ($code) {
         case "200":
+
             return "OK";
         case "403":
+
             return "Access denied";
         case "404":
+
             return "Not Found";
         default:
+
             return "Unknown Status";
     }
 }
@@ -73,12 +81,16 @@ function getstatusmessage($code)
 function getStatusCode($headers, $uri)
 {
     if (checkHost($headers)) {
+
         return "404";
     } elseif (checkDirectory($uri, $headers)) {
+
         return "403";
     } elseif (checkFile($uri, $headers)) {
+
         return "404";
     } else {
+
         return "200";
     }
 }
@@ -86,26 +98,29 @@ function getStatusCode($headers, $uri)
 function checkFile($uri, $headers)
 {
     $host = getHost($headers);
-    $path = START_DIRECTORY . $host . $uri;
-    return !file_exists($path);
+
+    return !file_exists(START_DIRECTORY . $host . $uri);
 }
 
 function checkDirectory($uri, $headers)
 {
     $host = getHost($headers);
-    $directory = dirname($uri);
-    $path = START_DIRECTORY . $host . $directory;
-    echo file_get_contents($path);
-    return !is_dir($path);
+    $file = dirname($uri);
+
+    return !is_dir(START_DIRECTORY . $host . $file);
 }
 
 
 function checkHost($headers)
 {
     $host = getHost($headers);
-    if (strpos($host, "student.shpp.me") == 0 || strpos($host, "another.shpp.me") == 0) {
+
+    if (str_contains($host, "student.shpp.me") ||
+        str_contains($host, "another.shpp.me")) {
+
         return false;
     }
+
     return true;
 }
 
@@ -114,14 +129,16 @@ function checkHost($headers)
  */
 function getHost($headers)
 {
+
     foreach ($headers as $subarray) {
-        foreach ($subarray as $key => $value) {
-            if ($key === "Host") {
-                return $value;
-            }
+
+        if ($subarray[0] === 'Host') {
+
+            return $subarray[1];
         }
+
+        throw new HostNotFoundException("The Host not found in the headers");
     }
-    throw new HostNotFoundException("The Host not found in the headers");
 }
 
 class HostNotFoundException extends Exception
@@ -131,27 +148,22 @@ class HostNotFoundException extends Exception
 
 function parseTcpStringAsHttpRequest($string)
 {
-    return array(
-        "method" => getMethod($string),
+
+    return ["method" => getMethod($string),
         "uri" => getUri($string),
         "headers" => getHeaders($string),
-        "body" => getBody($string),
-    );
+        "body" => getBody($string),];
 }
 
 function getHeaders($string)
 {
-    $lines = explode("\n", $string);
-
-    $headers = array();
+    $lines = explode(PHP_EOL, $string);
+    $headers = [];
 
     for ($i = 1; $i < sizeof($lines); $i++) {
-        if (strpos($lines[$i], ":")) {
-            $keyAndValue = explode(": ", $lines[$i]);
-            $header = [
-                $keyAndValue[0] => $keyAndValue[1]
-            ];
-            $headers[] = $header;
+
+        if (str_contains($lines[$i], ':')) {
+            $headers[] = explode(": ", $lines[$i]);
         }
     }
 
@@ -160,24 +172,28 @@ function getHeaders($string)
 
 function getBody($string)
 {
-    $lines = explode("\n", $string);
-    $emptyIndex = array_search("", $lines); // Знаходимо індекс порожнього рядка, розділяючого заголовки та тіло
-    return trim(implode(array_slice($lines, $emptyIndex + 1))); // Повертаємо всі рядки після порожнього рядка як тіло запиту
+    if (str_contains($string, PHP_EOL . PHP_EOL)) {
+
+        return explode(PHP_EOL . PHP_EOL, $string, 2)[1];
+    }
+
+    return '';
+
 }
 
 function getUri($string)
 {
-    $result = explode(" ", $string);
-    return $result[1];
+
+    return explode(" ", $string)[1];
 }
 
 function getMethod($string)
 {
-    $array = explode(" ", $string);
-    return $array[0];
+
+    return explode(" ", $string)[0];
 }
 
-$mystr = "GET /a/d HTTP/1.1
+$mystr = "GET /123 HTTP/1.1
 Host: student.shpp.me
 Accept: image/gif, image/jpeg, */*
 Accept-Language: en-us

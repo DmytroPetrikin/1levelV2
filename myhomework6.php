@@ -15,7 +15,7 @@ file_put_contents($counterFile, $currentCount);
 
 if (isset($_GET['reset']) && $_GET['reset'] === 'true') {
     file_put_contents($counterFile, 0);
-    header('Location: http://localhost/1level/myhomework6.php');
+    header('Location: http://localhost/myhomework6.php');
 }
 ?>
 
