@@ -1,5 +1,10 @@
 <?php
-const START_DIRECTORY = "D:/";
+
+const HOST_BASE_DIRECTORIES = [
+    'student.shpp.me' => 'student',
+    'another.shpp.me' => 'another'
+];
+const MY_DIRECTORY = '/Applications/XAMPP/xamppfiles/htdocs/';
 
 //function readHttpLikeInput()
 //{
@@ -35,83 +40,51 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
-    $statuscode = getStatusCode($headers, $uri);
-    $statusMessage = getStatusMessage($statuscode);
-    $body = getResult($statuscode, $uri, $headers);
-    outputHttpResponse($statuscode, $statusMessage, $headers, $body);
+    try {
+        $statusCode = getStatusCode($headers, $uri);
+        $statusMessage = "Found";
+        $body = getFileContent($headers, $uri);
+    } catch (Exception $e) {
+        $statusCode = $e->getCode();
+        $statusMessage = $e->getMessage();
+        $body = 'Error: ' . $statusMessage;
+    }
 
+    outputHttpResponse($statusCode, $statusMessage, $headers, $body);
 }
 
-function getResult($code, $uri, $headers)
+function getFileContent($headers, $uri)
 {
-    return match ($code) {
-        '200' => file_get_contents(START_DIRECTORY . getHost($headers) . $uri),
-        '403' => "Access denied",
-        '404' => "Not Found",
-        default => "Unknown Status",
-    };
-}
-
-function getstatusmessage($code)
-{
-    return match ($code) {
-        '200' => 'OK',
-        '403' => 'Access denied',
-        '404' => 'Not Found',
-        default => 'Unknown Status',
-    };
+    $host = getHost($headers);
+    return file_get_contents(MY_DIRECTORY . $host . $uri);
 }
 
 function getStatusCode($headers, $uri)
 {
-    if (checkHost($headers)) {
-
-        return "404";
-    }
-    if (checkDirectory($uri, $headers)) {
-
-        return "403";
-    }
-    if (checkFile($uri, $headers)) {
-
-        return "404";
-    }
-
-    return "200";
-}
-
-function checkFile($uri, $headers)
-{
     $host = getHost($headers);
 
-    return !file_exists(START_DIRECTORY . $host . $uri);
-}
-
-function checkDirectory($uri, $headers)
-{
-    $host = getHost($headers);
-    $file = dirname($uri);
-
-    return !is_dir(START_DIRECTORY . $host . $file);
-}
-
-
-function checkHost($headers)
-{
-    $host = getHost($headers);
-
-    if (str_contains($host, "student.shpp.me") ||
-        str_contains($host, "another.shpp.me")) {
-
-        return false;
+    if (checkHost($host)) {
+        throw new Exception("Bad request", 404);
     }
 
-    return true;
+    if (checkFileExist($host, $uri)) {
+        throw new Exception("File not exist", 404);
+    }
+
+    return 200;
 }
 
-/**
- * @throws HostNotFoundException
- */
+function checkFileExist($host, $uri): bool
+{
+    return !file_exists(MY_DIRECTORY . $host . $uri);
+}
+
+function checkHost(mixed $host)
+{
+    return !in_array($host, HOST_BASE_DIRECTORIES);
+}
+
+
 function getHost($headers)
 {
 
@@ -119,15 +92,11 @@ function getHost($headers)
 
         if ($subarray[0] === 'Host') {
 
-            return $subarray[1];
+            return HOST_BASE_DIRECTORIES[$subarray[1]];
         }
-
-        throw new HostNotFoundException("The Host not found in the headers");
     }
-}
 
-class HostNotFoundException extends Exception
-{
+    throw new Exception("The Host not found in the headers", 404);
 }
 
 
@@ -170,7 +139,6 @@ function getBody($string)
 
 function getUri($string)
 {
-
     return explode(" ", $string)[1];
 }
 
@@ -180,7 +148,7 @@ function getMethod($string)
     return explode(" ", $string)[0];
 }
 
-$mystr = "GET /123 HTTP/1.1
+$mystr = "GET /123  HTTP/1.1
 Host: student.shpp.me
 Accept: image/gif, image/jpeg, */*
 Accept-Language: en-us

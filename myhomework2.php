@@ -62,7 +62,6 @@ function getBody($string)
 
 function getUri($string)
 {
-
     return explode(" ", $string)[1];
 }
 
@@ -73,4 +72,4 @@ function getMethod($string)
 }
 
 $http = parseTcpStringAsHttpRequest($contents);
-echo(json_encode($http, JSON_PRETTY_PRINT));
+echo json_encode($http, JSON_PRETTY_PRINT);

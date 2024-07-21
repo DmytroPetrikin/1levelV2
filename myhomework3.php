@@ -39,50 +39,42 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
-    $statuscode = getStatusCode($method, $uri);
-    $statusmessage = getStatusMessage($statuscode);
-    outputHttpResponse($statuscode, $statusmessage, $headers, getResult($uri, $statuscode));
+    try {
+        $statuscode = getStatusCode($method, $uri);
+        $statusmessage = "OK";
+        $body = getResult($uri);
+    } catch (Exception $ex) {
+        $statuscode = $ex->getCode();
+        $statusmessage = $ex->getMessage();
+        $body = $statusmessage;
+    }
+
+    outputHttpResponse($statuscode, $statusmessage, $headers, $body);
 }
 
-function getResult($uri, $statusmessage)
+function getResult($uri)
 {
-    if ($statusmessage !== "OK") {
-
-        return $statusmessage;
-    }
     $sumQueryAndNumbers = explode('=', $uri);
     $nums = explode(',', $sumQueryAndNumbers[1]);
 
     return array_sum($nums);
 }
 
-function getStatusMessage($statuscode)
-{
-    return match ($statuscode){
-        404 => "Not Found",
-        400 => 'Bad Request',
-        default => 'OK',
-    };
-}
-
 function getStatusCode($method, $uri)
 {
-    if (start(explode("?", $uri)) != "/sum") {
 
-        return "404";
+    if (explode("?", $uri)[0] != "/sum") {
+
+        throw new Exception("Not Found", 404);
     }
     if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
 
-        return "400";
+       throw new Exception("Bad Request", 400);
     }
 
-    return "200";
+    return 200;
 }
 
-function start(array $explode)
-{
-    return $explode[0];
-}
 
 function parseTcpStringAsHttpRequest($string)
 {
@@ -112,14 +104,9 @@ function getHeaders($string)
 
 function getBody($string)
 {
-    //тут такий варіант не працює, бо як я зрозумів з умови body є не завжди а тим паче
-    //порожній рядок
-    //return explode("\n\n", $string, 2)[1];
-
-    $lines = explode("\n", $string);
+    $lines = explode(PHP_EOL, $string);
     $body = end($lines);
-    //загалом не дуже розумію як знайти body якщо не буде порожнього рядка
-    //бо моя перевірка чи немає : не дуже вдала
+
     if (!strpos($body, ":")) {
 
         return $body;

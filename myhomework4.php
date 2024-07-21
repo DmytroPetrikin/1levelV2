@@ -37,63 +37,60 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
-    $statuscode = getStatusCode($headers, $uri, $body);
-    outputHttpResponse($statuscode, getStatusMessage($statuscode), $headers, getResult($statuscode));
+    try{
+        $statusCode = getStatusCode($headers, $uri, $body);
+        $statusMessage = "Found";
+    }catch (Exception $e){
+        $statusCode = $e->getCode();
+        $statusMessage = $e->getMessage();
+    }
+
+    $body = getBodyMessage($statusCode,$statusMessage);
+    outputHttpResponse($statusCode, $statusMessage, $headers, $body);
 }
 
-function getResult($statuscode)
-{
-    return match ($statuscode) {
-        '200' => '<h1 style="color:green">FOUND</h1>',
-        '400' => '<h1 style="color:red">NOT FOUND</h1>',
-        '404' => '<h1 style="color:red">NOT FOUND</h1>',
-        '401' => '<h1 style="color:red">WRONG PASSWORD</h1>',
-        '500' => '<h1 style="color:red">INTERNAL SERVER ERROR</h1>',
-        default => "Unknown Status",
-    };
+function getBodyMessage($statuscode , $statusMessage){
+    $color = 'green';
+    if($statuscode != 200){
+        $color = 'red';
+    }
+    return '<h1 style="color:' . $color . '">' . $statusMessage . '</h1>';
 }
 
-function getStatusMessage($statuscode)
-{
-    return match ($statuscode){
-        '200' => 'Ok',
-        '400' => 'Bad Request',
-        '404' => 'Not Found',
-        '500' => 'Internal Server Error',
-        default => 'Unknown Status',
-    };
-}
 
 function getStatusCode($headers, $uri, $body)
 {
-    if (checkUriEndContentType($uri, $headers)) {//якщо неправильний урі або контент тайп
+    if (checkUri($uri) && checkContType($headers)) {//якщо неправильний урі або контент тайп
 
-        return "400";
+        throw new Exception("Bad Request", 400);
     }
+
     if (checkPassTxt()) {
 
-        return "500";
+        throw new Exception("Internal Server Error", 500);
     }
+
     if (checkLogin($body)) {
 
-        return "404";
+        throw new Exception("Not Found", 404);
     }
+
     if (checkPassword($body)) {//якщо неправильний  пароль
 
-        return "401";
+        throw new Exception("Unauthorized", 401);
     }
 
-    return "200";
+    return 200;
 }
 
 function checkPassword($body)
 {
     $password = getPassword($body);
-    $log = getLogin($body);
+    $login = getLogin($body);
     $data = file_get_contents(FILE);
 
-    if (str_contains($data, $log)) {
-        $firstValuePassword = explode($log . ':', $data)[1];
+    if (str_contains($data, $login)) {
+        $firstValuePassword = explode($login . ':', $data)[1];
         $truePassword = explode(PHP_EOL, $firstValuePassword)[0];
 
         return $truePassword !== $password;
@@ -129,15 +126,16 @@ function getLogin($body)
     return explode('&password=', $logPass)[0];
 }
 
-function checkUriEndContentType($uri, $headers)
+function checkUri($uri)
 {
-    $contType = getContType($headers);
 
-    return $uri !== MY_URI || $contType !== MY_CONT_TYPE;
+    return $uri !== MY_URI;
 }
 
-class ContentTypeNotFoundException extends Exception
-{
+function checkContType($headers){
+    $contType = getContType($headers);
+
+    return $contType !== MY_CONT_TYPE;
 }
 
 function getContType($headers)
@@ -150,12 +148,7 @@ function getContType($headers)
             return $subarray[1];
         }
     }
-    throw new ContentTypeNotFoundException("The Content-Type was not found in the headers.");
-}
-
-function start(array $explode)
-{
-    return $explode[0];
+    throw new Exception("The Content-Type was not found in the headers.");
 }
 
 function parseTcpStringAsHttpRequest($string)
