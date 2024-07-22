@@ -1,4 +1,7 @@
 <?php
+
+require_once 'HttpStatusCodes.php';
+
 //function readHttpLikeInput()
 //{
 //    $f = fopen('php://stdin', 'r');
@@ -40,16 +43,10 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 function processHttpRequest($method, $uri, $headers, $body)
 {
     try {
-        $statuscode = getStatusCode($method, $uri);
-        $statusmessage = "OK";
-        $body = getResult($uri);
+        outputHttpResponse(getStatusCode($method, $uri), "OK", $headers, getResult($uri));
     } catch (Exception $ex) {
-        $statuscode = $ex->getCode();
-        $statusmessage = $ex->getMessage();
-        $body = $statusmessage;
+        outputHttpResponse($ex->getCode(), $ex->getMessage(), $headers, $ex->getMessage());
     }
-
-    outputHttpResponse($statuscode, $statusmessage, $headers, $body);
 }
 
 function getResult($uri)
@@ -64,15 +61,14 @@ function getStatusCode($method, $uri)
 {
 
     if (explode("?", $uri)[0] != "/sum") {
-
-        throw new Exception("Not Found", 404);
+        throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
     }
+
     if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
-
-       throw new Exception("Bad Request", 400);
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
     }
 
-    return 200;
+    return HTTPStatusCodes::OK;
 }
 
 
@@ -84,15 +80,16 @@ function parseTcpStringAsHttpRequest($string)
         "uri" => getUri($string),
         "headers" => getHeaders($string),
         "body" => getBody($string),
-        ];
+    ];
 }
 
 function getHeaders($string)
 {
     $lines = explode("\n", $string);
     $headers = [];
+    $numberOfRows = count($lines);
 
-    for ($i = 1; $i < sizeof($lines); $i++) {
+    for ($i = 1; $i < $numberOfRows; $i++) {
 
         if (str_contains($lines[$i], ':')) {
             $headers[] = explode(": ", $lines[$i]);

@@ -43,8 +43,9 @@ function getHeaders($string)
 {
     $lines = explode("\n", $string);
     $headers = [];
+    $numberOfRows = count($lines);
 
-    for ($i = 1; $i < sizeof($lines); $i++) {
+    for ($i = 1; $i < $numberOfRows; $i++) {
 
         if (str_contains($lines[$i], ':')) {
             $headers[] = explode(": ", $lines[$i]);

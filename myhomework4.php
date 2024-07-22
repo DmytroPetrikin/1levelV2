@@ -1,5 +1,6 @@
 <?php
 
+require_once 'HttpStatusCodes.php';
 const MY_URI = "/api/checkLoginAndPassword";
 const MY_CONT_TYPE = "application/x-www-form-urlencoded";
 const FILE = "passwords";
@@ -50,37 +51,31 @@ function processHttpRequest($method, $uri, $headers, $body)
 }
 
 function getBodyMessage($statuscode , $statusMessage){
-    $color = 'green';
-    if($statuscode != 200){
-        $color = 'red';
-    }
+    $color = ($statuscode == HttpStatusCodes::OK) ? "green" : "red";
+
     return '<h1 style="color:' . $color . '">' . $statusMessage . '</h1>';
 }
 
 
 function getStatusCode($headers, $uri, $body)
 {
-    if (checkUri($uri) && checkContType($headers)) {//якщо неправильний урі або контент тайп
-
-        throw new Exception("Bad Request", 400);
+    if (!checkUri($uri) && !checkContType($headers)) {//якщо неправильний урі або контент тайп
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
     }
 
-    if (checkPassTxt()) {
-
-        throw new Exception("Internal Server Error", 500);
+    if (!checkPassTxt()) {
+        throw new Exception("Internal Server Error", HttpStatusCodes::INTERNAL_SERVER_ERROR);
     }
 
-    if (checkLogin($body)) {
-
-        throw new Exception("Not Found", 404);
+    if (!checkLogin($body)) {
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
     }
 
-    if (checkPassword($body)) {//якщо неправильний  пароль
-
-        throw new Exception("Unauthorized", 401);
+    if (!checkPassword($body)) {//якщо неправильний  пароль
+        throw new Exception("Unauthorized", HttpStatusCodes::UNAUTHORIZED);
     }
 
-    return 200;
+    return HttpStatusCodes::OK;
 }
 
 function checkPassword($body)
@@ -93,10 +88,10 @@ function checkPassword($body)
         $firstValuePassword = explode($login . ':', $data)[1];
         $truePassword = explode(PHP_EOL, $firstValuePassword)[0];
 
-        return $truePassword !== $password;
+        return $truePassword === $password;
     }
 
-    return true;
+    return false;
 }
 
 
@@ -109,33 +104,33 @@ function getPassword($body)
 function checkPassTxt()
 {
 
-    return !file_exists(FILE);
+    return file_exists(FILE);
 }
 
 function checkLogin($body)
 {
     $data = file_get_contents(FILE);
 
-    return !str_contains($data, getLogin($body) . ':');
+    return str_contains($data, getLogin($body) . ':');
 }
 
 function getLogin($body)
 {
-    $logPass = explode('login=', $body)[1];
 
-    return explode('&password=', $logPass)[0];
+    $login = explode('&', $body)[0];
+
+    return explode('=', $login)[1];
 }
 
 function checkUri($uri)
 {
 
-    return $uri !== MY_URI;
+    return $uri === MY_URI;
 }
 
 function checkContType($headers){
-    $contType = getContType($headers);
 
-    return $contType !== MY_CONT_TYPE;
+    return getContType($headers) === MY_CONT_TYPE;
 }
 
 function getContType($headers)
@@ -148,7 +143,7 @@ function getContType($headers)
             return $subarray[1];
         }
     }
-    throw new Exception("The Content-Type was not found in the headers.");
+    throw new Exception("The Content-Type was not found in the headers." , HttpStatusCodes::BAD_REQUEST);
 }
 
 function parseTcpStringAsHttpRequest($string)
@@ -166,8 +161,9 @@ function getHeaders($string)
 {
     $lines = explode(PHP_EOL, $string);
     $headers = [];
+    $numberOfRows = count($lines);
 
-    for ($i = 1; $i < sizeof($lines); $i++) {
+    for ($i = 1; $i < $numberOfRows; $i++) {
 
         if (str_contains($lines[$i], ':')) {
             $headers[] = explode(': ', $lines[$i]);

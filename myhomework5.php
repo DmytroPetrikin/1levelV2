@@ -1,5 +1,6 @@
 <?php
 
+require_once 'HttpStatusCodes.php';
 const HOST_BASE_DIRECTORIES = [
     'student.shpp.me' => 'student',
     'another.shpp.me' => 'another'
@@ -41,16 +42,10 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 function processHttpRequest($method, $uri, $headers, $body)
 {
     try {
-        $statusCode = getStatusCode($headers, $uri);
-        $statusMessage = "Found";
-        $body = getFileContent($headers, $uri);
+        outputHttpResponse(getStatusCode($headers, $uri), "Found", $headers, getFileContent($headers, $uri));
     } catch (Exception $e) {
-        $statusCode = $e->getCode();
-        $statusMessage = $e->getMessage();
-        $body = 'Error: ' . $statusMessage;
+        outputHttpResponse($e->getCode(), $e->getMessage(), $headers, 'Error: ' . $e->getMessage());
     }
-
-    outputHttpResponse($statusCode, $statusMessage, $headers, $body);
 }
 
 function getFileContent($headers, $uri)
@@ -64,14 +59,14 @@ function getStatusCode($headers, $uri)
     $host = getHost($headers);
 
     if (checkHost($host)) {
-        throw new Exception("Bad request", 404);
+        throw new Exception("Bad request", HttpStatusCodes::BAD_REQUEST);
     }
 
     if (checkFileExist($host, $uri)) {
-        throw new Exception("File not exist", 404);
+        throw new Exception("File not exist", HttpStatusCodes::FILE_NOT_EXISTS);
     }
 
-    return 200;
+    return HttpStatusCodes::OK;
 }
 
 function checkFileExist($host, $uri): bool
@@ -95,7 +90,6 @@ function getHost($headers)
             return HOST_BASE_DIRECTORIES[$subarray[1]];
         }
     }
-
     throw new Exception("The Host not found in the headers", 404);
 }
 
@@ -115,8 +109,9 @@ function getHeaders($string)
 {
     $lines = explode(PHP_EOL, $string);
     $headers = [];
+    $numberOfRows = count($lines);
 
-    for ($i = 1; $i < sizeof($lines); $i++) {
+    for ($i = 1; $i < $numberOfRows; $i++) {
 
         if (str_contains($lines[$i], ':')) {
             $headers[] = explode(": ", $lines[$i]);
