@@ -42,8 +42,17 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
+
+    if (explode("?", $uri)[0] != "/sum") {
+        throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
+    }
+
+    if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
+    }
+
     try {
-        outputHttpResponse(getStatusCode($method, $uri), "OK", $headers, getResult($uri));
+        outputHttpResponse(HTTPStatusCodes::OK, "OK", $headers, getResult($uri));
     } catch (Exception $ex) {
         outputHttpResponse($ex->getCode(), $ex->getMessage(), $headers, $ex->getMessage());
     }
@@ -56,21 +65,6 @@ function getResult($uri)
 
     return array_sum($nums);
 }
-
-function getStatusCode($method, $uri)
-{
-
-    if (explode("?", $uri)[0] != "/sum") {
-        throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
-    }
-
-    if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
-        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
-    }
-
-    return HTTPStatusCodes::OK;
-}
-
 
 function parseTcpStringAsHttpRequest($string)
 {

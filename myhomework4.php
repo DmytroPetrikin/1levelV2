@@ -38,8 +38,26 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
+    $data = file_get_contents(FILE);
+
+    if (!checkUri($uri) && !checkContType($headers)) {//якщо неправильний урі або контент тайп
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
+    }
+
+    if (!checkPassTxt()) {
+        throw new Exception("Internal Server Error", HttpStatusCodes::INTERNAL_SERVER_ERROR);
+    }
+
+    if (!checkLogin($body, $data)) {
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
+    }
+
+    if (!checkPassword($body, $data)) {//якщо неправильний  пароль
+        throw new Exception("Unauthorized", HttpStatusCodes::UNAUTHORIZED);
+    }
+
     try{
-        $statusCode = getStatusCode($headers, $uri, $body);
+        $statusCode = HttpStatusCodes::OK;
         $statusMessage = "Found";
     }catch (Exception $e){
         $statusCode = $e->getCode();
@@ -56,33 +74,10 @@ function getBodyMessage($statuscode , $statusMessage){
     return '<h1 style="color:' . $color . '">' . $statusMessage . '</h1>';
 }
 
-
-function getStatusCode($headers, $uri, $body)
-{
-    if (!checkUri($uri) && !checkContType($headers)) {//якщо неправильний урі або контент тайп
-        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
-    }
-
-    if (!checkPassTxt()) {
-        throw new Exception("Internal Server Error", HttpStatusCodes::INTERNAL_SERVER_ERROR);
-    }
-
-    if (!checkLogin($body)) {
-        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
-    }
-
-    if (!checkPassword($body)) {//якщо неправильний  пароль
-        throw new Exception("Unauthorized", HttpStatusCodes::UNAUTHORIZED);
-    }
-
-    return HttpStatusCodes::OK;
-}
-
-function checkPassword($body)
+function checkPassword($body, $data)
 {
     $password = getPassword($body);
     $login = getLogin($body);
-    $data = file_get_contents(FILE);
 
     if (str_contains($data, $login)) {
         $firstValuePassword = explode($login . ':', $data)[1];
@@ -107,9 +102,8 @@ function checkPassTxt()
     return file_exists(FILE);
 }
 
-function checkLogin($body)
+function checkLogin($body, $data)
 {
-    $data = file_get_contents(FILE);
 
     return str_contains($data, getLogin($body) . ':');
 }
