@@ -1,6 +1,7 @@
 <?php
 
 require_once 'HttpStatusCodes.php';
+require_once "ParserRequest.php";
 
 //function readHttpLikeInput()
 //{
@@ -43,15 +44,15 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 function processHttpRequest($method, $uri, $headers, $body)
 {
 
-    if (explode("?", $uri)[0] != "/sum") {
-        throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
-    }
-
-    if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
-        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
-    }
-
     try {
+
+        if (explode("?", $uri)[0] != "/sum") {
+            throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
+        }
+
+        if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
+            throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
+        }
         outputHttpResponse(HTTPStatusCodes::OK, "OK", $headers, getResult($uri));
     } catch (Exception $ex) {
         outputHttpResponse($ex->getCode(), $ex->getMessage(), $headers, $ex->getMessage());
@@ -68,54 +69,14 @@ function getResult($uri)
 
 function parseTcpStringAsHttpRequest($string)
 {
+    $parseRequest = ParserRequest::parseRequest($string);
 
     return [
-        "method" => getMethod($string),
-        "uri" => getUri($string),
-        "headers" => getHeaders($string),
-        "body" => getBody($string),
+        "method" => $parseRequest->getMethod(),
+        "uri" => $parseRequest->getUri(),
+        "headers" => $parseRequest->getHeaders(),
+        "body" => $parseRequest->getBody(),
     ];
-}
-
-function getHeaders($string)
-{
-    $lines = explode("\n", $string);
-    $headers = [];
-    $numberOfRows = count($lines);
-
-    for ($i = 1; $i < $numberOfRows; $i++) {
-
-        if (str_contains($lines[$i], ':')) {
-            $headers[] = explode(": ", $lines[$i]);
-        }
-    }
-
-    return $headers;
-}
-
-function getBody($string)
-{
-    $lines = explode(PHP_EOL, $string);
-    $body = end($lines);
-
-    if (!strpos($body, ":")) {
-
-        return $body;
-    }
-
-    return "";
-}
-
-function getUri($string)
-{
-
-    return explode(" ", $string)[1];
-}
-
-function getMethod($string)
-{
-
-    return explode(" ", $string)[0];
 }
 
 $mystr = "GET /sum?nums=1,2,5 HTTP/1.1

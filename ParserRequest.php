@@ -2,45 +2,64 @@
 
 class ParserRequest
 {
-    private $lines = [];
-    private $bodyExist;
-    private $countLines;
+    private $method;
+    private $uri;
+    private $headers;
+    private $body;
 
-    public function __construct($string)
+    public function __construct($method, $uri, $headers, $body)
     {
-        $this->lines = explode(PHP_EOL, $string);
-        $this->bodyExist = $this->isBodyExist($this->lines);
-        $this->countLines = count($this->lines);
+        $this->method = $method;
+        $this->uri = $uri;
+        $this->headers = $headers;
+        $this->body = $body;
     }
 
-    public function getLines(){
+    public static function parseRequest($request)
+    {
 
-        return $this->lines;
-    }
+        $lines = explode(PHP_EOL, $request);
+        $firstLine = explode(' ', $lines[0]);
+        $method = $firstLine[0];
+        $uri = $firstLine[1];
+        $headers = [];
+        $body = '';
+        $numberOfRows = count($lines);
 
-    public function getCountLines(){
+        for ($i = 1; $i < $numberOfRows; $i++) { // заповнили масив хедерів
 
-        return $this->countLines;
-    }
-
-    private function isBodyExist ($lines){
-
-        foreach ($lines as $line) {
-            if (trim($line) === '') {
-                return true; // Порожній рядок розділяє заголовки та тіло
+            if ($lines[$i] === '') {
+                $body = ($lines[$i] < $numberOfRows) ? $lines[$numberOfRows - 1] : '';
+                break;
             }
+            $headers[] = $lines[$i];
         }
-        return false;
+
+        return new ParserRequest($method, $uri, $headers, $body);
     }
 
-    public function getBodyExist(){
+    public function getMethod()
+    {
 
-        return $this->bodyExist;
+        return $this->method;
     }
 
-    function getFirstLine(){
+    public function getUri()
+    {
 
-        return $this->lines[0];
+        return $this->uri;
+    }
+
+    public function getHeaders()
+    {
+
+        return $this->headers;
+    }
+
+    public function getBody()
+    {
+
+        return $this->body;
     }
 
 }

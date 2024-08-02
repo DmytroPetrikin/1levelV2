@@ -1,11 +1,12 @@
 <?php
 
 require_once 'HttpStatusCodes.php';
+require_once 'ParserRequest.php';
 const HOST_BASE_DIRECTORIES = [
     'student.shpp.me' => 'student',
     'another.shpp.me' => 'another'
 ];
-const MY_DIRECTORY = '/Applications/XAMPP/xamppfiles/htdocs/';
+const MY_DIRECTORY = '/Applications/XAMPP/xamppfiles/htdocs/1levelV2/';
 
 //function readHttpLikeInput()
 //{
@@ -41,109 +42,68 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
+
     try {
-        outputHttpResponse(getStatusCode($headers, $uri), "Found", $headers, getFileContent($headers, $uri));
+        $nameFolder = getNameFolder($headers);
+
+        if (checkHost($nameFolder)) {
+            throw new Exception("Bad request", HttpStatusCodes::BAD_REQUEST);
+        }
+
+        if (checkFileExist($nameFolder, $uri)) {
+            throw new Exception("File not exist", HttpStatusCodes::FILE_NOT_EXISTS);
+        }
+
+        outputHttpResponse(HttpStatusCodes::OK, "Found", $headers, getFileContent($nameFolder, $uri));
     } catch (Exception $e) {
         outputHttpResponse($e->getCode(), $e->getMessage(), $headers, 'Error: ' . $e->getMessage());
     }
 }
 
-function getFileContent($headers, $uri)
+function getFileContent($nameFolder, $uri)
 {
-    $host = getHost($headers);
-    return file_get_contents(MY_DIRECTORY . $host . $uri);
+
+    return file_get_contents(MY_DIRECTORY . $nameFolder . $uri);
 }
 
-function getStatusCode($headers, $uri)
+function checkFileExist($nameFolder, $uri): bool
 {
-    $host = getHost($headers);
-
-    if (checkHost($host)) {
-        throw new Exception("Bad request", HttpStatusCodes::BAD_REQUEST);
-    }
-
-    if (checkFileExist($host, $uri)) {
-        throw new Exception("File not exist", HttpStatusCodes::FILE_NOT_EXISTS);
-    }
-
-    return HttpStatusCodes::OK;
+    return !file_exists(MY_DIRECTORY . $nameFolder . $uri);
 }
 
-function checkFileExist($host, $uri): bool
+function checkHost(mixed $nameFolder)
 {
-    return !file_exists(MY_DIRECTORY . $host . $uri);
-}
-
-function checkHost(mixed $host)
-{
-    return !in_array($host, HOST_BASE_DIRECTORIES);
+    return !in_array($nameFolder, HOST_BASE_DIRECTORIES);
 }
 
 
-function getHost($headers)
+function getNameFolder($headers)
 {
 
-    foreach ($headers as $subarray) {
+    foreach ($headers as $header) {
+        $header = explode(': ', $header, 2);
 
-        if ($subarray[0] === 'Host') {
+        if ($header[0] === "Host") {
 
-            return HOST_BASE_DIRECTORIES[$subarray[1]];
+            return HOST_BASE_DIRECTORIES[$header[1]];
         }
     }
-    throw new Exception("The Host not found in the headers", 404);
 }
 
 
 function parseTcpStringAsHttpRequest($string)
 {
+    $parser = ParserRequest:: ParseRequest($string);
 
     return [
-        "method" => getMethod($string),
-        "uri" => getUri($string),
-        "headers" => getHeaders($string),
-        "body" => getBody($string),
+        "method" => $parser->getMethod(),
+        "uri" => $parser->getUri(),
+        "headers" => $parser->getHeaders(),
+        "body" => $parser->getBody(),
     ];
 }
 
-function getHeaders($string)
-{
-    $lines = explode(PHP_EOL, $string);
-    $headers = [];
-    $numberOfRows = count($lines);
-
-    for ($i = 1; $i < $numberOfRows; $i++) {
-
-        if (str_contains($lines[$i], ':')) {
-            $headers[] = explode(": ", $lines[$i]);
-        }
-    }
-
-    return $headers;
-}
-
-function getBody($string)
-{
-    if (str_contains($string, PHP_EOL . PHP_EOL)) {
-
-        return explode(PHP_EOL . PHP_EOL, $string, 2)[1];
-    }
-
-    return '';
-
-}
-
-function getUri($string)
-{
-    return explode(" ", $string)[1];
-}
-
-function getMethod($string)
-{
-
-    return explode(" ", $string)[0];
-}
-
-$mystr = "GET /123  HTTP/1.1
+$mystr = "GET /1  HTTP/1.1
 Host: student.shpp.me
 Accept: image/gif, image/jpeg, */*
 Accept-Language: en-us

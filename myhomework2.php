@@ -1,6 +1,6 @@
 <?php
 
-
+require_once "ParserRequest.php";
 // не звертайте на цю функцію уваги
 // вона потрібна для того щоб правильно зчитати вхідні дані
 //function readHttpLikeInput()
@@ -30,62 +30,14 @@
 
 function parseTcpStringAsHttpRequest($string)
 {
-    $lines = explode(PHP_EOL, $string);
-    $firstLine = explode(' ', $lines[0]);
-    $method = $firstLine[0];
-    $uri = $firstLine[1];
-    $headers = [];
-    $numberOfRows = count($lines);
-
-    for ($i = 1; $i < $numberOfRows; $i++) { // заповнили масив хедерів
-
-        if ($lines[$i] === '') {
-            $body = ($lines[$i] < $numberOfRows) ?  $lines[$numberOfRows - 1] :  '';
-            break;
-        }
-        $headers[] = $lines[$i];
-    }
+    $parseRequest = ParserRequest::parseRequest($string);
 
     return [
-        "method" => $method,
-        "uri" => $uri,
-        "headers" => $headers,
-        "body" => $body,
+        "method" => $parseRequest->getMethod(),
+        "uri" => $parseRequest->getUri(),
+        "headers" => $parseRequest->getHeaders(),
+        "body" => $parseRequest->getBody(),
     ];
-}
-
-
-function getHeaders($string)
-{
-    $lines = explode("\n", $string);
-    $headers = [];
-    $numberOfRows = count($lines);
-
-    for ($i = 1; $i < $numberOfRows; $i++) {
-
-        if (str_contains($lines[$i], ':')) {
-            $headers[] = explode(": ", $lines[$i]);
-        }
-    }
-
-    return $headers;
-}
-
-function getBody($string)
-{
-
-    return explode("\n\n", $string, 2)[1];
-}
-
-function getUri($string)
-{
-    return explode(" ", $string)[1];
-}
-
-function getMethod($string)
-{
-
-    return explode(" ", $string)[0];
 }
 
 $mystr = "GET /sum?nums=1,2,5 HTTP/1.1
