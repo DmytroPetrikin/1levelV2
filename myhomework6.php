@@ -1,5 +1,5 @@
 <?php
-$counterFile = 'counter';
+$counterFile = 'classes/counter';
 
 if (!file_exists($counterFile)) {
     touch($counterFile);

@@ -1,10 +1,10 @@
 <?php
 
-require_once 'HttpStatusCodes.php';
-require_once 'ParserRequest.php';
+require_once 'classes/HttpStatusCodes.php';
+require_once 'classes/ParserRequest.php';
 const HOST_BASE_DIRECTORIES = [
-    'student.shpp.me' => 'student',
-    'another.shpp.me' => 'another'
+    'student.shpp.me' => 'resources/student',
+    'another.shpp.me' => 'resources/another'
 ];
 const MY_DIRECTORY = '/Applications/XAMPP/xamppfiles/htdocs/1levelV2/';
 
@@ -44,14 +44,10 @@ function processHttpRequest($method, $uri, $headers, $body)
 {
 
     try {
-        $nameFolder = getNameFolder($headers);
+        $nameFolder = getFolderByHost($headers);
 
-        if (checkHost($nameFolder)) {
+        if (checkFileMissing($nameFolder, $uri)) {
             throw new Exception("Bad request", HttpStatusCodes::BAD_REQUEST);
-        }
-
-        if (checkFileExist($nameFolder, $uri)) {
-            throw new Exception("File not exist", HttpStatusCodes::FILE_NOT_EXISTS);
         }
 
         outputHttpResponse(HttpStatusCodes::OK, "Found", $headers, getFileContent($nameFolder, $uri));
@@ -66,18 +62,12 @@ function getFileContent($nameFolder, $uri)
     return file_get_contents(MY_DIRECTORY . $nameFolder . $uri);
 }
 
-function checkFileExist($nameFolder, $uri): bool
+function checkFileMissing($nameFolder, $uri): bool
 {
     return !file_exists(MY_DIRECTORY . $nameFolder . $uri);
 }
 
-function checkHost(mixed $nameFolder)
-{
-    return !in_array($nameFolder, HOST_BASE_DIRECTORIES);
-}
-
-
-function getNameFolder($headers)
+function getFolderByHost($headers)
 {
 
     foreach ($headers as $header) {

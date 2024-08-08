@@ -7,7 +7,7 @@ class ParserRequest
     private $headers;
     private $body;
 
-    public function __construct($method, $uri, $headers, $body)
+    public function __construct(string $method, string $uri, array $headers, string $body)
     {
         $this->method = $method;
         $this->uri = $uri;
@@ -29,13 +29,15 @@ class ParserRequest
         for ($i = 1; $i < $numberOfRows; $i++) { // заповнили масив хедерів
 
             if ($lines[$i] === '') {
-                $body = ($lines[$i] < $numberOfRows) ? $lines[$numberOfRows - 1] : '';
+                //якщо порожній рядок не є останнім то тіло буде після нього
+                //інакше повертаємо порожній рядок
+                $body = ($i + 1 < $numberOfRows) ? $lines[$i + 1] : '';
                 break;
             }
             $headers[] = $lines[$i];
         }
 
-        return new ParserRequest($method, $uri, $headers, $body);
+        return new self ($method, $uri, $headers, $body);
     }
 
     public function getMethod()
@@ -60,6 +62,14 @@ class ParserRequest
     {
 
         return $this->body;
+    }
+
+    public function getParamBody()
+    {
+        $result = [];
+        parse_str($this->body, $result);
+
+        return $result;
     }
 
 }

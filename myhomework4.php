@@ -1,11 +1,12 @@
 <?php
 
-require_once 'HttpStatusCodes.php';
-require_once "ParserRequest.php";
-require_once "User.php";
+require_once 'classes/HttpStatusCodes.php';
+require_once "classes/ParserRequest.php";
+require_once "classes/User.php";
+require_once "classes/UserFileSearcher.php";
 const MY_URI = "/api/checkLoginAndPassword";
 const MY_CONT_TYPE = "application/x-www-form-urlencoded";
-const FILE = "passwords";
+const FILE = "resources/passwords";
 //function readHttpLikeInput()
 //{
 //    $f = fopen('php://stdin', 'r');
@@ -43,7 +44,6 @@ function processHttpRequest($method, $uri, $headers, $body)
 {
 
     try {
-        $user = User:: createUser($body);
 
         if (!checkUri($uri) || !checkContType($headers)) {//якщо неправильний урі або контент тайп
             throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
@@ -53,11 +53,14 @@ function processHttpRequest($method, $uri, $headers, $body)
             throw new Exception("Internal Server Error", HttpStatusCodes::INTERNAL_SERVER_ERROR);
         }
 
-        if (!checkLogin($user)) {
+        $userFileSearcher = new UserFileSearcher(FILE);
+        $user = $userFileSearcher->findUserByLogin($body['login']);
+
+        if ($user == null) {
             throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
         }
 
-        if (!checkPassword($user)) {//якщо неправильний  пароль
+        if ($user->getPassword() !== $body['password']) {//якщо неправильний  пароль
             throw new Exception("Unauthorized", HttpStatusCodes::UNAUTHORIZED);
         }
         outputHttpResponse(HttpStatusCodes::OK, "Found");
@@ -73,24 +76,10 @@ function getBodyMessage($statuscode, $statusMessage)
     return '<h1 style="color:' . $color . '">' . $statusMessage . '</h1>';
 }
 
-function checkPassword($user)
-{
-
-    return $user->getPassword() === $user->getUserData()['password'];
-}
-
 function checkPassTxt()
 {
 
     return file_exists(FILE);
-}
-
-function checkLogin($user)
-{
-    $user->searchUserData(FILE);
-
-//якщо масив порожній відповідно функція searchUserData не знайшла відповідний логін в файлі
-    return !empty($user->getUserData());
 }
 
 function checkUri($uri)
@@ -117,7 +106,7 @@ function getContType($headers)
         }
     }
 
-    throw new Exception("The Content-Type was not found in the headers.", HttpStatusCodes::BAD_REQUEST);
+    return null;
 }
 
 function parseTcpStringAsHttpRequest($string)
@@ -128,7 +117,7 @@ function parseTcpStringAsHttpRequest($string)
         "method" => $parseRequest->getMethod(),
         "uri" => $parseRequest->getUri(),
         "headers" => $parseRequest->getHeaders(),
-        "body" => $parseRequest->getBody(),
+        "body" => $parseRequest->getParamBody(),
     ];
 }
 

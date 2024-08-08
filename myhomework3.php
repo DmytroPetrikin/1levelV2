@@ -1,7 +1,7 @@
 <?php
 
-require_once 'HttpStatusCodes.php';
-require_once "ParserRequest.php";
+require_once 'classes/HttpStatusCodes.php';
+require_once "classes/ParserRequest.php";
 
 //function readHttpLikeInput()
 //{

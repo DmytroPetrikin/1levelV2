@@ -1,6 +1,6 @@
 <?php
 
-require_once "ParserRequest.php";
+require_once "classes/ParserRequest.php";
 // не звертайте на цю функцію уваги
 // вона потрібна для того щоб правильно зчитати вхідні дані
 //function readHttpLikeInput()
