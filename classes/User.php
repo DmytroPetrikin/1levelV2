@@ -2,19 +2,8 @@
 
 class User
 {
-    private $login;
-    private $password;
-
-    public function __construct($login, $password)
+    public function __construct(private string $login, private string $password)
     {
-        $this->login = $login;
-        $this->password = $password;
-    }
-
-    public static function createUser(string $login, string $password)
-    {
-
-        return new self ($login, $password);
     }
 
     public function getLogin()

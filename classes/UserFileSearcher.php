@@ -1,5 +1,6 @@
 <?php
 require_once "User.php";
+require_once "HttpStatusCodes.php";
 class UserFileSearcher
 {
     private $fileName;
@@ -19,11 +20,11 @@ class UserFileSearcher
             if ($data[0] === $login) {
                 fclose($file);
 
-                return User::createUser($login, trim($data[1])) ;
+                return new User($login, trim($data[1])) ;
             }
         }
         fclose($file);
 
-        return null;
+        throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
     }
 }

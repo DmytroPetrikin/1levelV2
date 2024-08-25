@@ -6,6 +6,7 @@ class ParserRequest
     private $uri;
     private $headers;
     private $body;
+    private $params = [];
 
     public function __construct(string $method, string $uri, array $headers, string $body)
     {
@@ -13,6 +14,7 @@ class ParserRequest
         $this->uri = $uri;
         $this->headers = $headers;
         $this->body = $body;
+        parse_str($body, $this->params);
     }
 
     public static function parseRequest($request)
@@ -27,11 +29,11 @@ class ParserRequest
         $numberOfRows = count($lines);
 
         for ($i = 1; $i < $numberOfRows; $i++) { // заповнили масив хедерів
-
             if ($lines[$i] === '') {
                 //якщо порожній рядок не є останнім то тіло буде після нього
                 //інакше повертаємо порожній рядок
                 $body = ($i + 1 < $numberOfRows) ? $lines[$i + 1] : '';
+
                 break;
             }
             $headers[] = $lines[$i];
@@ -42,34 +44,31 @@ class ParserRequest
 
     public function getMethod()
     {
-
         return $this->method;
     }
 
     public function getUri()
     {
-
         return $this->uri;
     }
 
     public function getHeaders()
     {
-
         return $this->headers;
     }
 
     public function getBody()
     {
-
         return $this->body;
     }
 
-    public function getParamBody()
+    public function getParams(?string $key = null): mixed
     {
-        $result = [];
-        parse_str($this->body, $result);
+        if ($key === null) {
+            return $this->params; // повертає все тіло як масив
+        }
 
-        return $result;
+        return $this->params[$key] ?? null;
     }
 
 }

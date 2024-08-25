@@ -42,7 +42,6 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
-
     try {
         $nameFolder = getFolderByHost($headers);
 
@@ -58,7 +57,6 @@ function processHttpRequest($method, $uri, $headers, $body)
 
 function getFileContent($nameFolder, $uri)
 {
-
     return file_get_contents(MY_DIRECTORY . $nameFolder . $uri);
 }
 
@@ -69,7 +67,6 @@ function checkFileMissing($nameFolder, $uri): bool
 
 function getFolderByHost($headers)
 {
-
     foreach ($headers as $header) {
         $header = explode(': ', $header, 2);
 

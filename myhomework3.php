@@ -43,16 +43,15 @@ function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 
 function processHttpRequest($method, $uri, $headers, $body)
 {
-
     try {
-
         if (explode("?", $uri)[0] != "/sum") {
             throw new Exception("Not Found", HttpStatusCodes::NOT_FOUND);
         }
 
-        if (!str_contains($uri, '?nums=') || !str_contains($method, 'GET')) {
+        if (!str_contains($uri, '?nums=') || $method !=='GET') {
             throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
         }
+
         outputHttpResponse(HTTPStatusCodes::OK, "OK", $headers, getResult($uri));
     } catch (Exception $ex) {
         outputHttpResponse($ex->getCode(), $ex->getMessage(), $headers, $ex->getMessage());

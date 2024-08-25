@@ -7,96 +7,77 @@ require_once "classes/UserFileSearcher.php";
 const MY_URI = "/api/checkLoginAndPassword";
 const MY_CONT_TYPE = "application/x-www-form-urlencoded";
 const FILE = "resources/passwords";
-//function readHttpLikeInput()
-//{
-//    $f = fopen('php://stdin', 'r');
-//    $store = "";
-//    $toread = 0;
-//    while ($line = fgets($f)) {
-//        $store .= preg_replace("/\r/", "", $line);
-//        if (preg_match('/Content-Length: (\d+)/', $line, $m))
-//            $toread = $m[1] * 1;
-//        if ($line == "\r\n")
-//            break;
-//    }
-//    if ($toread > 0)
-//        $store .= fread($f, $toread);
-//    return $store;
-//}
-//
-//$contents = readHttpLikeInput();
 
 function outputHttpResponse($statusCode, $statusMessage)
 {
     $body = getBodyMessage($statusCode, $statusMessage);
-    $response = "HTTP/1.1 $statusCode $statusMessage" . PHP_EOL;
-    $response .= "Date: " . date("l, d F  Y h:i:sa") . PHP_EOL;
-    $response .= "Server: Apache/2.2.14 (Win32)" . PHP_EOL;
-    $response .= "Content-Length: " . strlen($body) . PHP_EOL;
-    $response .= "Connection: Closed" . PHP_EOL;
-    $response .= "Content-Type: text/html; charset=utf-8" . PHP_EOL;
-    $response .= PHP_EOL . $body;
+    $response = "HTTP/1.1 $statusCode $statusMessage" . PHP_EOL .
+    "Date: " . date("l, d F  Y h:i:sa") . PHP_EOL .
+    "Server: Apache/2.2.14 (Win32)" . PHP_EOL .
+    "Content-Length: " . strlen($body) . PHP_EOL .
+    "Connection: Closed" . PHP_EOL .
+    "Content-Type: text/html; charset=utf-8" . PHP_EOL .
+    PHP_EOL . $body;
 
     echo $response;
 }
 
-function processHttpRequest($method, $uri, $headers, $body)
+function processHttpRequest($request)
 {
-
     try {
+        $parserRequest = ParserRequest::parseRequest($request);
 
-        if (!checkUri($uri) || !checkContType($headers)) {//якщо неправильний урі або контент тайп
+        if (isInvalidUri($parserRequest->getUri()) ||
+            isInvalidContentType($parserRequest-> getHeaders())) {//якщо неправильний урі або контент тайп
             throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
         }
 
-        if (!checkPassTxt()) {
+        if (isPasswordFileMissing()) {
             throw new Exception("Internal Server Error", HttpStatusCodes::INTERNAL_SERVER_ERROR);
         }
 
         $userFileSearcher = new UserFileSearcher(FILE);
-        $user = $userFileSearcher->findUserByLogin($body['login']);
+        $user = $userFileSearcher->findUserByLogin($parserRequest->getParams('login'));
 
-        if ($user == null) {
-            throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
-        }
-
-        if ($user->getPassword() !== $body['password']) {//якщо неправильний  пароль
+        if (isPasswordIncorrect($parserRequest->getParams('password'), $user->getPassword())) {//якщо неправильний  пароль
             throw new Exception("Unauthorized", HttpStatusCodes::UNAUTHORIZED);
         }
+
         outputHttpResponse(HttpStatusCodes::OK, "Found");
     } catch (Exception $e) {
         outputHttpResponse($e->getCode(), $e->getMessage());
     }
 }
 
-function getBodyMessage($statuscode, $statusMessage)
+function isPasswordIncorrect($password, $hashedPassword)
 {
-    $color = ($statuscode == HttpStatusCodes::OK) ? "green" : "red";
+    return !password_verify($password, $hashedPassword);
+}
+
+function getBodyMessage($statusCode, $statusMessage)
+{
+    $color = ($statusCode == HttpStatusCodes::OK) ? "green" : "red";
 
     return '<h1 style="color:' . $color . '">' . $statusMessage . '</h1>';
 }
 
-function checkPassTxt()
+function isPasswordFileMissing()
 {
-
-    return file_exists(FILE);
+    return !file_exists(FILE);
 }
 
-function checkUri($uri)
+function isInvalidUri($uri)
 {
-
-    return $uri === MY_URI;
+    return $uri !== MY_URI;
 }
 
-function checkContType($headers)
+function isInvalidContentType($headers)
 {
-
-    return getContType($headers) === MY_CONT_TYPE;
+    return getContType($headers) !== MY_CONT_TYPE;
 }
 
 function getContType($headers)
 {
-
     foreach ($headers as $header) {
         $header = explode(': ', $header, 2);
 
@@ -109,18 +90,6 @@ function getContType($headers)
     return null;
 }
 
-function parseTcpStringAsHttpRequest($string)
-{
-    $parseRequest = ParserRequest::parseRequest($string);
-
-    return [
-        "method" => $parseRequest->getMethod(),
-        "uri" => $parseRequest->getUri(),
-        "headers" => $parseRequest->getHeaders(),
-        "body" => $parseRequest->getParamBody(),
-    ];
-}
-
 $testString = "POST /api/checkLoginAndPassword HTTP/1.1
 Accept: */*
 Content-Type: application/x-www-form-urlencoded
@@ -129,5 +98,4 @@ Content-Length: 35
 
 login=login1&password=1";
 
-$http = parseTcpStringAsHttpRequest($testString);
-processHttpRequest($http["method"], $http["uri"], $http["headers"], $http["body"]);
+processHttpRequest($testString);
