@@ -8,25 +8,6 @@ const HOST_BASE_DIRECTORIES = [
 ];
 const MY_DIRECTORY = '/Applications/XAMPP/xamppfiles/htdocs/1levelV2/';
 
-//function readHttpLikeInput()
-//{
-//    $f = fopen('php://stdin', 'r');
-//    $store = "";
-//    $toread = 0;
-//    while ($line = fgets($f)) {
-//        $store .= preg_replace("/\r/", "", $line);
-//        if (preg_match('/Content-Length: (\d+)/', $line, $m))
-//            $toread = $m[1] * 1;
-//        if ($line == "\r\n")
-//            break;
-//    }
-//    if ($toread > 0)
-//        $store .= fread($f, $toread);
-//    return $store;
-//}
-//
-//$contents = readHttpLikeInput();
-
 function outputHttpResponse($statuscode, $statusmessage, $headers, $body)
 {
     $response = "HTTP/1.1 $statuscode $statusmessage" . PHP_EOL;
@@ -71,7 +52,6 @@ function getFolderByHost($headers)
         $header = explode(': ', $header, 2);
 
         if ($header[0] === "Host") {
-
             return HOST_BASE_DIRECTORIES[$header[1]];
         }
     }

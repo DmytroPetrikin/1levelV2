@@ -36,6 +36,7 @@ class ParserRequest
 
                 break;
             }
+
             $headers[] = $lines[$i];
         }
 

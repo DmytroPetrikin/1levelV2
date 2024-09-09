@@ -82,7 +82,6 @@ function getContType($headers)
         $header = explode(': ', $header, 2);
 
         if ($header[0] === "Content-Type") {
-
             return $header[1];
         }
     }

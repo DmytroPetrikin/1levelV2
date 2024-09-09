@@ -23,8 +23,8 @@ class UserFileSearcher
                 return new User($login, trim($data[1])) ;
             }
         }
-        fclose($file);
 
+        fclose($file);
         throw new Exception("Bad Request", HttpStatusCodes::BAD_REQUEST);
     }
 }
