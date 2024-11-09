@@ -1,15 +1,16 @@
 <?php
-require_once 'config.php';
-require_once 'validation.php';
+require_once '../config.php';
+require_once '../validation.php';
 
 function changeItem(array $newTodoItem): array
 {
     $todolist = json_decode(file_get_contents(TODO_FILE), true);
 
     foreach ($todolist as &$todo) {
-        if (in_array($newTodoItem['id'], $todo)) {
-            $todo['text'] = $newTodoItem['text'];
-            $todo['checked'] = $newTodoItem['checked'];
+        if (in_array($newTodoItem[COLUMN_TODO_ID], $todo)) {
+            //захист від xss
+            $todo[COLUMN_TODO_TEXT] = htmlspecialchars($newTodoItem[COLUMN_TODO_TEXT]);
+            $todo[COLUMN_TODO_CHECKED] = $newTodoItem[COLUMN_TODO_CHECKED];
             file_put_contents(TODO_FILE, json_encode($todolist, JSON_PRETTY_PRINT));
 
             return ['ok' => true];
@@ -20,17 +21,9 @@ function changeItem(array $newTodoItem): array
 }
 
 try {
-    $jsonData = file_get_contents('php://input');
-    $data = json_decode($jsonData, true);
-
-    if (isTodoFileMissing()) {
-        throw new Exception('TODO file does not exist', 404);
-    }
-
-    if (isIdMissing($data)) {
-        throw new Exception('ID missing', 404);
-    }
-
+    $data = json_decode(file_get_contents('php://input'), true);
+    isTodoFileMissing();
+    isValueMissing($data, COLUMN_TODO_CHECKED, COLUMN_TODO_TEXT, COLUMN_TODO_ID);
     echo json_encode(changeItem($data));
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);

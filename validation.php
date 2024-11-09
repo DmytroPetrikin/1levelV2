@@ -3,25 +3,33 @@ require_once 'config.php';
 
 function isTodoFileMissing()
 {
-    return !file_exists(TODO_FILE);
+    if (!file_exists(TODO_FILE)) {
+        throw new Exception('TODO file does not exist', 404);
+    }
 }
 
-function isIdFileMissing()
+function isDataBaseConnectingMissing(mysqli $connect)
 {
-    return !file_exists(ID_FILE);
+    if ($connect->connect_errno) {
+        die("Connection failed: " . $connect->connect_error);
+    }
 }
 
-function isIdMissing($array)
+function isStatementMissing($stmt)
 {
-    return !isset($array['id']);
+    if (!$stmt) {
+        throw new Exception("Failed to prepare statement: " . mysqli_error($stmt), 500);
+    }
 }
 
-function isValueTextMissing($data)
+function isValueMissing($data, ...$values)
 {
-    return !isset($data['text']);
+    foreach ($values as $value) {
+        if (!isset($data[$value])) {
+            throw new Exception("No value selected", 400);
+        }
+    }
 }
-
-
 
 
 
