@@ -22,12 +22,19 @@ function isStatementMissing($stmt)
     }
 }
 
-function isValueMissing($data, ...$values)
+function isValueMissing($data, $values)
 {
     foreach ($values as $value) {
         if (!isset($data[$value])) {
             throw new Exception("No value selected", 400);
         }
+    }
+}
+
+function checkSpecialCharactersPassword($password)
+{
+    if (preg_match('/[<>"\'&]/', $password)) {
+        throw new Exception("Password must contain at least one special character");
     }
 }
 
