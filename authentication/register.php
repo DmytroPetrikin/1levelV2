@@ -3,7 +3,7 @@ function registerUser(PDO $db, string $login, string $password)
 {
     $login = htmlspecialchars($login);
     // Перевірка чи існує вже такий користувач
-    $checkUserStatement = $db->prepare("SELECT * FROM " . TABLE_NAME_FOR_USERS . " WHERE " . COLUMN_USER_LOGIN . " = :login");
+    $checkUserStatement = $db->prepare("SELECT * FROM users WHERE login = :login");
     $checkUserStatement->bindParam(":login", $login, PDO::PARAM_STR);
     $checkUserStatement->execute();
 
@@ -13,8 +13,7 @@ function registerUser(PDO $db, string $login, string $password)
 
     checkSpecialCharactersPassword($password);
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $registerStatement = $db->prepare("INSERT INTO " . TABLE_NAME_FOR_USERS . " (" . COLUMN_USER_LOGIN . ", " . COLUMN_USER_PASSWORD . ") VALUES (:login, :password)");
-    $registerStatement->bindParam(":login", $login, PDO::PARAM_STR);
+    $registerStatement = $db->prepare("INSERT INTO users (login, pass) VALUES (:login, :password)");    $registerStatement->bindParam(":login", $login, PDO::PARAM_STR);
     $registerStatement->bindParam(":password", $hashedPassword, PDO::PARAM_STR);
 
     if ($registerStatement->execute()) {

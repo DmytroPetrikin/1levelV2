@@ -1,7 +1,7 @@
 <?php
 function deleteItem(PDO $db, int $itemId, int $userId)
 {
-    $deleteItemStatement = $db->prepare("DELETE FROM " . TABLE_NAME_FOR_TODO . " WHERE " . COLUMN_TODO_ID . " = :id AND " . COLUMN_USER_ID . " = :userId ");
+    $deleteItemStatement = $db->prepare("DELETE FROM todos WHERE id = :id AND user_id = :userId");
     $deleteItemStatement->bindParam(":id", $itemId, PDO::PARAM_INT);
     $deleteItemStatement->bindParam(":userId", $userId, PDO::PARAM_INT);
 

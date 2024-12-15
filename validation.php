@@ -33,7 +33,7 @@ function isValueMissing($data, $values)
 
 function checkSpecialCharactersPassword($password)
 {
-    if (preg_match('/[<>"\'&]/', $password)) {
+    if (!preg_match('/^[a-zA-Z0-9!_]+$/', $password)) {
         throw new Exception("Password must contain at least one special character");
     }
 }

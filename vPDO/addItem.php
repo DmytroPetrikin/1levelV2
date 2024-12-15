@@ -2,8 +2,7 @@
 function addItem(string $text, int $userId, PDO $db)
 {
     $text = htmlspecialchars($text);
-    $addItemStatement = $db->prepare("INSERT INTO " . TABLE_NAME_FOR_TODO . " (" . COLUMN_TODO_TEXT . ", " . COLUMN_TODO_CHECKED . ", " . COLUMN_USER_ID . ") VALUES (:text, :checked, :userId)");
-// Прив'язка значень
+    $addItemStatement = $db->prepare("INSERT INTO todos (text, checked, user_id) VALUES (:text, :checked, :userId)");
     $addItemStatement->bindValue(':text', $text, PDO::PARAM_STR);
     $addItemStatement->bindValue(':checked', INT_VALUE_FALSE, PDO::PARAM_INT); // Використання константи
     $addItemStatement->bindValue(':userId', $userId, PDO::PARAM_INT); // Прив'язка ID користувача
