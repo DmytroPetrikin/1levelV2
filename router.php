@@ -10,7 +10,7 @@ require_once 'validation.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     // Відповідаємо на запит OPTIONS
-    http_response_code(200);
+    http_response_code(RESPONSE_CODE_OK);
 
     exit();
 }
@@ -31,10 +31,10 @@ try {
         GET_ITEMS => getItems($connect, $_SESSION[COLUMN_USER_ID]),
         DELETE_ITEM => deleteItem($connect, $data[COLUMN_TODO_ID], $_SESSION[COLUMN_USER_ID]),
         CHANGE_ITEM => changeItem($connect, $data[COLUMN_TODO_ID], $data[COLUMN_TODO_TEXT], $data[COLUMN_TODO_CHECKED], $_SESSION[COLUMN_USER_ID]),
-        default => ['error' => 'Unknown request']
+        default => [http_response_code(RESPONSE_CODE_BAD_REQUEST) && 'error' => 'Unknown request']
     };
     echo json_encode($response);
 } catch (Exception $error) {
-    http_response_code($error->getCode() ?: 500);
+    http_response_code($error->getCode() ?: RESPONSE_CODE_INTERNAL_SERVER_ERROR);
     echo json_encode(['error' => $error->getMessage()]);
 }

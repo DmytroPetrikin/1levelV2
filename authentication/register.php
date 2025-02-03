@@ -11,7 +11,7 @@ function registerUser(PDO $db, string $login, string $password)
         return ['error' => 'User already exists'];
     }
 
-    checkSpecialCharactersPassword($password);
+    validatePassword($password);
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     $registerStatement = $db->prepare("INSERT INTO users (login, pass) VALUES (:login, :password)");    $registerStatement->bindParam(":login", $login, PDO::PARAM_STR);
     $registerStatement->bindParam(":password", $hashedPassword, PDO::PARAM_STR);

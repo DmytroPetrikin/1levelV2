@@ -31,11 +31,12 @@ function isValueMissing($data, $values)
     }
 }
 
-function checkSpecialCharactersPassword($password)
+function validatePassword($password)
 {
-    if (!preg_match('/^[a-zA-Z0-9!_]+$/', $password)) {
-        throw new Exception("Password must contain at least one special character");
+    if (!preg_match('/^[a-zA-Z0-9!_*]+$/', $password)) {
+        throw new Exception("Password must consist only of Latin letters, numbers, or the symbols !, _, *.");
     }
+
 }
 
 

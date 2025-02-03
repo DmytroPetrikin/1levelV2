@@ -2,7 +2,7 @@
 function loginUser(PDO $bd, string $login, string $password): array
 {
     $login = htmlspecialchars($login);
-    checkSpecialCharactersPassword($password);
+    validatePassword($password);
     $userSearchStatement = $bd->prepare("SELECT user_id, pass FROM users WHERE login = :login");
     $userSearchStatement->bindParam(':login', $login, PDO::PARAM_STR);
     $userSearchStatement->execute();
