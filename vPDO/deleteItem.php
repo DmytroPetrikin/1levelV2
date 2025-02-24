@@ -7,7 +7,7 @@ function deleteItem(PDO $db, int $itemId, int $userId)
 
     if ($deleteItemStatement->execute() &&
         $deleteItemStatement->rowCount() > 0) {
-        return true;
+        return ['ok'=> true];
     }
 
     throw new Exception('No item found with the given ID');

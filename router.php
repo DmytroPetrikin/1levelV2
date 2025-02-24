@@ -32,7 +32,9 @@ try {
         GET_ITEMS => getItems($connect, $_SESSION[COLUMN_USER_ID]),
         DELETE_ITEM => deleteItem($connect, $data[COLUMN_TODO_ID], $_SESSION[COLUMN_USER_ID]),
         CHANGE_ITEM => changeItem($connect, $data[COLUMN_TODO_ID], $data[COLUMN_TODO_TEXT], $data[COLUMN_TODO_CHECKED], $_SESSION[COLUMN_USER_ID]),
-        default => [http_response_code(RESPONSE_CODE_BAD_REQUEST) && 'error' => 'Unknown request']
+        default => function () {
+            throw new Exception("Not found", RESPONSE_CODE_NOT_FOUND);
+        }
     };
     echo json_encode($response);
 } catch (Exception $error) {

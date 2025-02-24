@@ -1,7 +1,7 @@
 <?php
-function logout()
+function logout() : array
 {
     session_destroy();
 
-    throw new Exception(true);
+    return ['ok'=> true];
 }

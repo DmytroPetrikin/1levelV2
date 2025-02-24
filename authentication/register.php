@@ -1,5 +1,5 @@
 <?php
-function registerUser(PDO $db, string $login, string $password) :bool
+function registerUser(PDO $db, string $login, string $password) :array
 {
     $login = htmlspecialchars($login);
     // Перевірка чи існує вже такий користувач
@@ -17,7 +17,7 @@ function registerUser(PDO $db, string $login, string $password) :bool
     $registerStatement->bindParam(":password", $hashedPassword, PDO::PARAM_STR);
 
     if ($registerStatement->execute()) {
-        return true;
+        return ['ok'=> true];
     }
 
     throw new Exception('Failed to register user');
