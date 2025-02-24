@@ -15,6 +15,6 @@ function addItem(string $text, int $userId, PDO $db)
         return ['success' => 'Item added successfully', 'id' => $id];
     }
 
-    return ['error' => 'Failed to add item']; // Якщо жоден рядок не був змінений
+    throw new Exception('Failed to add item'); // Якщо жоден рядок не був змінений
 }
 

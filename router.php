@@ -23,6 +23,7 @@ try {
     $action = $_GET[ACTION];
     require_once ACTIONS[$action];
     isValueMissing($data, VALIDATION_DATA[$action]); //TODO проблема в цій перевірці
+
     $response = match ($action) {
         LOGIN => loginUser($connect, $data[COLUMN_USER_LOGIN], $data[COLUMN_USER_PASSWORD]),
         LOGOUT => logout(),

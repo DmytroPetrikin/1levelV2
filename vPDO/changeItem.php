@@ -9,10 +9,10 @@ function changeItem(PDO $db, int $id, string $newText, bool $checked, int $userI
     $changeItemStmt->bindParam(":checked", $checkedValue, PDO::PARAM_INT);
     $changeItemStmt->bindParam(":userId", $userId, PDO::PARAM_INT);
 
-    if ($changeItemStmt->execute() &&
-        $changeItemStmt->rowCount() > 0) {
+    if ($changeItemStmt->execute()
+        && $changeItemStmt->rowCount() > 0) {
         return ['success' => 'Item updated successfully'];
     }
 
-    return ['error' => 'No item found with the given ID'];
+    throw new Exception('No item found with the given ID');
 }

@@ -1,5 +1,5 @@
 <?php
-function loginUser(PDO $bd, string $login, string $password): array
+function loginUser(PDO $bd, string $login, string $password): bool
 {
     $login = htmlspecialchars($login);
     validatePassword($password);
@@ -11,9 +11,9 @@ function loginUser(PDO $bd, string $login, string $password): array
         if (password_verify($password, $user[COLUMN_USER_PASSWORD])) {
             $_SESSION[COLUMN_USER_ID] = $user[COLUMN_USER_ID];
 
-            return ['ok' => true];
+            return true;
         }
     }
 
-    return ['error' => 'Invalid login or password.'];
+    throw new Exception('Invalid login or password.');
 }
