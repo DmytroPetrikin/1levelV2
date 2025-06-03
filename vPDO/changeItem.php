@@ -1,8 +1,8 @@
 <?php
-function changeItem(PDO $db, int $id, string $newText, bool $checked, int $userId)
+function changeItem(int $id, string $newText, bool $checked, int $userId)
 {
     $newText = htmlspecialchars($newText);
-    $changeItemStmt = $db->prepare("UPDATE todos SET text = :newText, checked = :checked WHERE id = :id AND user_id = :userId");
+    $changeItemStmt = DataBase::getInstance()->prepare("UPDATE todos SET text = :newText, checked = :checked WHERE id = :id AND user_id = :userId");
     $checkedValue = $checked ? INT_VALUE_TRUE : INT_VALUE_FALSE;
     $changeItemStmt->bindParam(":id", $id, PDO::PARAM_INT);
     $changeItemStmt->bindParam(":newText", $newText, PDO::PARAM_STR);

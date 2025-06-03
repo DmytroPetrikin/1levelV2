@@ -1,9 +1,9 @@
 <?php
-function loginUser(PDO $bd, string $login, string $password): array
+function loginUser(string $login, string $password): array
 {
     $login = htmlspecialchars($login);
     validatePassword($password);
-    $userSearchStatement = $bd->prepare("SELECT user_id, pass FROM users WHERE login = :login");
+    $userSearchStatement = DataBase::getInstance()->prepare("SELECT user_id, pass FROM users WHERE login = :login");
     $userSearchStatement->bindParam(':login', $login, PDO::PARAM_STR);
     $userSearchStatement->execute();
 
@@ -15,5 +15,5 @@ function loginUser(PDO $bd, string $login, string $password): array
         }
     }
 
-    throw new Exception('Invalid login or password.');
+    throw new Exception('Invalid login or password.' ,404);
 }

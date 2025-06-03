@@ -1,7 +1,7 @@
 <?php
-function getItems(PDO $db, int $userId)
+function getItems(int $userId)
 {
-    $getTodoItemsStmt = $db->prepare("SELECT * FROM todos WHERE user_id = :userId");
+    $getTodoItemsStmt = DataBase::getInstance()->prepare("SELECT * FROM todos WHERE user_id = :userId");
     $getTodoItemsStmt->bindValue(':userId', $userId, PDO::PARAM_INT);
     $getTodoItemsStmt->execute(); // Виконання запиту
 

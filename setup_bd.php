@@ -1,6 +1,6 @@
 <?php
 
-require_once 'config.php';
+require_once 'config/config.php';
 
 $sqlQueries = [
     "CREATE DATABASE IF NOT EXISTS todo_list_db",
